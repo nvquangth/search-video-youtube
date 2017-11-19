@@ -2,8 +2,6 @@ var apiKey = "AIzaSyDmVBc4vIy8hBBFnv3tB3VvhZwUewNqYjs";
 var arrQueue = [];
 var isPlay = false;
 var player;
-var done = false;
-var lenVideoPlay;
 
 function init() {
     gapi.client.setApiKey(apiKey);
@@ -12,73 +10,76 @@ function init() {
     });
 }
 
-$( "#frm-search" ).submit(function( event ) {
-    event.preventDefault();
-
-    $.get(
-        "https://www.googleapis.com/youtube/v3/search", {
-            part: 'snippet,id',
-            q: $("#keyword").val(),
-            maxResults: 25,
-            type: 'video',
-            order: "viewCount",
-            videoDuration: "medium",
-            key: apiKey
-        },
-        function(data) {
-            // console.log(data.items.length);
-            var data2 = [];
-            $('#result-search').html("");
-            var content = "";
-            for (var i = 0; i < data.items.length; i++) {
-                var url1 = "https://www.googleapis.com/youtube/v3/videos?id=" + data.items[i].id.videoId + "&key=" + apiKey + "&part=snippet,contentDetails";
-                $.ajax({
-                    async: false,
-                    type: 'GET',
-                    url: url1,
-                    success: function(data) {
-                        if (data.items.length > 0) {
-                            // console.log(JSON.stringify(data.items[0]));
-                            data2[i] = data.items[0];
-                            content = content + getResults(data.items[0]);
-                            
-                        }
-                    }
-                });
-            }
-            $('#result-search').append(content);
-
-            var index;
-            $(".item-search").click(function(){
-                index = $(".item-search").index(this);
-                // console.log(index);
-                addVideoPlay(data2[index])
-                // addVideoToQueue(data2[index])
-            })
-
-        });
+// event enter input tag
+$('#keyword').keypress(function(e) {
+    if (e.which == 13) {
+        search($("#keyword").val());
+        $("#keyword").val("");
+    }
 });
-$(function(){
 
-       
-})
+function search(keyword) {
+    // console.log(keyword);
+    $( "#frm-search" ).submit(function(event) {
+        event.preventDefault();
+        $.get(
+            "https://www.googleapis.com/youtube/v3/search", {
+                part: 'snippet,id',
+                q: keyword,
+                maxResults: 25,
+                type: 'video',
+                order: "viewCount",
+                videoDuration: "medium",
+                key: apiKey
+            },
+            function(data) {
+                // save data converted
+                var data2 = [];
+                // clear list search
+                $('#result-search').html("");
 
+                var content = "";
+                for (var i = 0; i < data.items.length; i++) {
+                    var url1 = "https://www.googleapis.com/youtube/v3/videos?id=" + data.items[i].id.videoId + "&key=" + apiKey + "&part=snippet,contentDetails";
+                    $.ajax({
+                        async: false,
+                        type: 'GET',
+                        url: url1,
+                        success: function(data) {
+                            if (data.items.length > 0) {
+                                data2[i] = data.items[0];
+                                content = content + getResults(data.items[0]);
+                            }
+                        }
+                    });
+                }
+                // show list video search  
+                $('#result-search').append(content);
 
+                // call when click add button
+                $(".add").click(function(){
+                    // get index item in list search when click add button
+                    var index = $(this).parent().index();
+                    // add video clicked above to play
+                    addVideoToPlay(data2[index]);
+                    // remove item selected in list search
+                    $(this).parent().remove();
+                    // remove element data2 array
+                    data2.splice(index, 1);
+                })
+
+            });
+    });
+}
+
+// return item search
 function getResults(item) {
+    // get properties of item
     var videoID = item.id;
-    // console.log(videoID);
     var title = item.snippet.title;
     var thumb = item.snippet.thumbnails.high.url;
     var durationR = convert_time(item.contentDetails.duration);
     var duration = convertT(durationR);
-    var channelTitle = item.snippet.channelTitle;
-
-    // console.log(videoID);
-    // console.log(title);
-    // console.log(thumb);
-    // console.log(duration);
-    // console.log("<button class='add' onclick=addVideoPlay('" + videoID + "', '" + title + "', '" + thumb + "', '" + duration + "')>Add</button>");
-
     var output = 
         "<div class='item-video item-search'>" +
             "<img class='thumb' src='" + thumb + "'>" +
@@ -91,81 +92,77 @@ function getResults(item) {
     return output;
 }
 
-function convertT(x) {
-    var h = x[0];
-    var m = x[1];
-    var s = x[2];
-    return ((h > 0 ? h + ":" + (m < 10 ? "0" : "") : "") + m + ":" + (s < 10 ? "0" : "") + s);
-}
-
-function convert_time(duration) {
-    var a = duration.match(/\d+/g);
-
-    if (duration.indexOf('M') >= 0 && duration.indexOf('H') == -1 && duration.indexOf('S') == -1) {
-        a = [0, a[0], 0];
-    }
-
-    if (duration.indexOf('H') >= 0 && duration.indexOf('M') == -1) {
-        a = [a[0], 0, a[1]];
-    }
-    if (duration.indexOf('H') >= 0 && duration.indexOf('M') == -1 && duration.indexOf('S') == -1) {
-        a = [a[0], 0, 0];
-    }
-
-    duration = 0;
-
-    if (a.length == 3) {
-        duration = duration + parseInt(a[0]) * 3600;
-        duration = duration + parseInt(a[1]) * 60;
-        duration = duration + parseInt(a[2]);
-    }
-
-    if (a.length == 2) {
-        duration = duration + parseInt(a[0]) * 60;
-        duration = duration + parseInt(a[1]);
-    }
-
-    if (a.length == 1) {
-        duration = duration + parseInt(a[0]);
-    }
-    var h = Math.floor(duration / 3600);
-    var m = Math.floor(duration % 3600 / 60);
-    var s = Math.floor(duration % 3600 % 60);
-    return [h, m, s];
-    // return ((h > 0 ? h + ":" + (m < 10 ? "0" : "") : "") + m + ":" + (s < 10 ? "0" : "") + s);
-}
-
-function addVideoPlay(item) {
-    console.log(arrQueue.length);
-    console.log(isPlay);
+function addVideoToPlay(item) {
+    var videoID = item.id;
+    var title = item.snippet.title;
+    var thumb = item.snippet.thumbnails.high.url;
+    var durationR = convert_time(item.contentDetails.duration);
+    var duration = convertT(durationR);
 
     if (isPlay == false) {
         isPlay = true;
         localStorage.clear();
-        var videoID = item.id;
-        var durationR = convert_time(item.contentDetails.duration);
-        lenVideoPlay = (durationR[0] * 60 * 60 + durationR[1] * 60 + durationR[2]) * 1000;
-        console.log(lenVideoPlay);
-
+        localStorage.setItem("LOCAL", "[]");
+        
         play(videoID);
 
-        // $('#video').html('');
-        // var content = 
-        // "<iframe width='640' height='360'" +
-        //     "src='https://www.youtube.com/embed/" + videoID + "?autoplay=1'" +
-        //     "frameborder='0" +
-        //     "style='border: solid 4px #37474F'" +
-        // "></iframe>"
-        // $('#video').append(content);
     } else {
-        arrQueue[arrQueue.length] = item;
-        addVideoToQueue(item);
+        $("#title-queue").text("Play list")
+        addVideoToQueue(videoID, title, thumb, duration);
     }
 }
 
+function addVideoToQueue(videoID, title, thumb, duration) {
+   
+    var output = 
+        "<div class='item-video item-queue'>" +
+            "<img class='thumb' src='" + thumb + "'>" +
+            "<div>" +
+                "<p class='title'>" + title + "</p>" +
+                "<p class='len'>" + duration + "</p>" +
+            "</div>" +
+            "<button class='play' id= '" + videoID + "'>Play</button>" +
+            "<button class='remove' id = 'rm-" + videoID + "'>Remove</button>" + 
+        "</div>";
+
+    $('#queue-play').append(output);
+
+    // call when click play button
+    $("#" + videoID).click(function () {
+        var index = $(this).parent().index();
+
+        play(videoID);
+        deleteVideoForLocalStorage(videoID, index);
+        deteleVideoForQueue(videoID);
+    })
+
+    // call when click remove button
+    $("#rm-" + videoID).click(function () {
+        var index = $(this).parent().index();
+
+        deleteVideoForLocalStorage(videoID, index);
+        deteleVideoForQueue(videoID);
+    })
+
+    addVideoToLocalStorage(videoID);
+}
+
+function addVideoToLocalStorage(videoID) {
+    var value = localStorage.getItem("LOCAL");
+    var queue = JSON.parse(value);
+
+    queue.push(videoID);
+    localStorage.setItem("LOCAL", JSON.stringify(queue));
+}
+
+// play video width video id
 function play(videoID) {
-    console.log(videoID);
-    // $('#video').html('');
+    // console.log(videoID);
+
+    // clear iframe video
+    $('#box-video').html('');
+    $('#box-video').append("<div id='video'></div>");
+
     player = new YT.Player('video', {
         height: '390',
         width: '640',
@@ -182,126 +179,95 @@ function onPlayerReady(event) {
 }
 
 function onPlayerStateChange(event) {
-    // if (event.data == YT.PlayerState.PLAYING && !done) {
-    //     setTimeout(stopVideo, 6000);
-    //     done = true;
-    // }
-
+    // when video was ended
     if (event.data == YT.PlayerState.ENDED) {
-        setNextVideo();
+        nextVideo();
     }
-}
-
-function setNextVideo() {
-    var keys = Object.keys(localStorage);
-    if (keys.length <= 0) {
-        return;
-    }
-    var value = localStorage.getItem(keys[0])
-    var item = JSON.parse(value);
-    var videoID = item.id;
-    console.log(videoID);
-    $('#test-video').html('');
-    $('#test-video').append("<div id='video'></div>");
-    play(videoID);
-    deleteItemVideoPlayed(videoID);
-    reloadQueuePlay();
 }
 
 function stopVideo() {
     player.stopVideo();
 }
 
-function addVideoToQueue(item) {
-    var videoID = item.id;
-    // console.log(videoID);
-    var title = item.snippet.title;
-    var thumb = item.snippet.thumbnails.high.url;
-    var durationR = convert_time(item.contentDetails.duration);
-    var duration = convertT(durationR);
-    var channelTitle = item.snippet.channelTitle;
+function nextVideo() {
+    // load list id video from local storage and convert json to array
+    var value = localStorage.getItem("LOCAL");
+    var queue = JSON.parse(value);
 
-    var output = 
-        "<div class='item-video item-queue'>" +
-            "<img class='thumb' src='" + thumb + "'>" +
-            "<div>" +
-                "<p class='title'>" + title + "</p>" +
-                "<p class='len'>" + duration + "</p>" +
-            "</div>" +
-            "<button class='play' onclick=playNow('" + videoID + "') >Play</button>" +
-        "</div>";
-
-    $('#queue-play').append(output);
-
-    localStorage.setItem(videoID, JSON.stringify(item));
-
-}
-
-function playNow(videoID) {
-
-    $('#video').html('');
-    var content = 
-    "<iframe width='640' height='360'" +
-        "src='https://www.youtube.com/embed/" + videoID + "?autoplay=1'" +
-        "frameborder='0" +
-        "style='border: solid 4px #37474F'" +
-    "></iframe>"
-    $('#video').append(content);
-
-    deleteItemVideoPlayed(videoID);
-    reloadQueuePlay();
-}
-
-function deleteItemVideoPlayed(videoID) {
-    localStorage.removeItem(videoID);
-}
-
-function reloadQueuePlay() {
-    var content = "";
-    var keys = Object.keys(localStorage);
-    for (var i = 0; i < keys.length; i++) {
-        var value = localStorage.getItem(keys[i])
-        var item = JSON.parse(value);
-
-        var videoID = item.id;
-        var title = item.snippet.title;
-        var thumb = item.snippet.thumbnails.high.url;
-
-        var durationR = convert_time(item.contentDetails.duration);
-        var duration = convertT(durationR);
-
-        content = content + 
-        "<div class='item-video item-queue'>" +
-            "<img class='thumb' src='" + thumb + "'>" +
-            "<div>" +
-                "<p class='title'>" + title + "</p>" +
-                "<p class='len'>" + duration + "</p>" +
-            "</div>" +
-            "<button class='play' onclick=playNow('" + videoID + "') >Play</button>" +
-        "</div>";
+    // if queue is empty rerutn;
+    if (queue.length == 0) {
+        console.log("queue is empty");
+        return;
     }
-    $('#queue-play').html('')
-    $('#queue-play').append(content);
+    if (queue.length == 1) {
+        $("#title-queue").html("");
+    }
 
+    // get id video at first queue and remove it from queue
+    var videoID = queue.shift();
+
+    // save queue back to local storage
+    localStorage.setItem("LOCAL", JSON.stringify(queue));
+
+    play(videoID);
+
+    deteleVideoForQueue(videoID);
 }
 
+// remove videoID from queue at index
+function deleteVideoForLocalStorage(videoID, index) {
+    var value = localStorage.getItem("LOCAL");
+    var queue = JSON.parse(value);
 
+    queue.splice(index, 1);
+    localStorage.setItem("LOCAL", JSON.stringify(queue));
 
-// $('.add').click(function () {
-//     console.log($(this).text());
-//     console.log($('.add').index(this));
-// });
+    if (queue.length == 0) {
+        $("#title-queue").html("");
+    }
+}
 
-// $( window ).resize(function() {
-//     resetVideoHeight();
-// });
+// delete item video from layout
+function deteleVideoForQueue(videoID) {
+    $("#" + videoID).parent().remove();
+}
 
-// function resetVideoHeight() {
-//     var h = $("#main-right").width() * 9/16;
-//     var w = $("#main-right").width() * 0.8;
-//     $("iframe").css("height", h);
-//     $("iframe").css("width", w);
-// }
-// $(".item-video").click(function(e){
-//     console.log(e)
-// });
+function convert_time(duration) {
+    var a = duration.match(/\d+/g);
+
+    if (duration.indexOf('M') >= 0 && duration.indexOf('H') == -1 && duration.indexOf('S') == -1) {
+        a = [0, a[0], 0];
+    }
+    if (duration.indexOf('H') >= 0 && duration.indexOf('M') == -1) {
+        a = [a[0], 0, a[1]];
+    }
+    if (duration.indexOf('H') >= 0 && duration.indexOf('M') == -1 && duration.indexOf('S') == -1) {
+        a = [a[0], 0, 0];
+    }
+
+    duration = 0;
+
+    if (a.length == 3) {
+        duration = duration + parseInt(a[0]) * 3600;
+        duration = duration + parseInt(a[1]) * 60;
+        duration = duration + parseInt(a[2]);
+    }
+    if (a.length == 2) {
+        duration = duration + parseInt(a[0]) * 60;
+        duration = duration + parseInt(a[1]);
+    }
+    if (a.length == 1) {
+        duration = duration + parseInt(a[0]);
+    }
+    var h = Math.floor(duration / 3600);
+    var m = Math.floor(duration % 3600 / 60);
+    var s = Math.floor(duration % 3600 % 60);
+    return [h, m, s];
+}
+
+function convertT(x) {
+    var h = x[0];
+    var m = x[1];
+    var s = x[2];
+    return ((h > 0 ? h + ":" + (m < 10 ? "0" : "") : "") + m + ":" + (s < 10 ? "0" : "") + s);
+}

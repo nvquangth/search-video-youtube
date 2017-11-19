@@ -98,16 +98,28 @@ body
 {
 	color: #E8AD0C;
 }
-.item-video .add, .play
+.item-video .add, .play, .remove
 {
 	float: right;
 	width: 70px;
-	background-color: #004D40;
 	border: none;
 	border-radius: 3px;
 	color: #FFF;
-	line-height: 40px;
+	line-height: 30px;
 	cursor: pointer;
+	margin: 5px 0px;
+}
+.item-video .add
+{
+	background-color: #004D40;
+}
+.item-video .play
+{
+	background-color: #00C853;
+}
+.item-video .remove
+{
+	background-color: #FF7043;
 }
 .item-video .add:hover
 {
@@ -116,14 +128,23 @@ body
 
 #main-right #video
 {
-	background-color: yellow;
+	
 }
 
 #main-right #video iframe
 {
 	margin: 0 auto;
 }
-
+#title-queue
+{
+	line-height: 50px;
+	text-transform: uppercase;
+	text-align: center;
+	font-weight: bold;
+	font-size: 25px;
+	padding: 0px 20px;
+	color: #D32F2F;
+}
 .clear-fix{
 	clear: both;
 }
