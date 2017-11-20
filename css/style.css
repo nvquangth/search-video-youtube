@@ -13,7 +13,6 @@ body
 {
 	float: left;
 	width: 50%;
-	height: 100px;
 	/*background-color: red;*/
 }
 
@@ -21,7 +20,6 @@ body
 {
 	float: right;
 	width: 50%;
-	height: 100px;
 	/*background-color: yellow;*/
 }
 
@@ -62,11 +60,11 @@ body
 	width: calc(100% - 40px);
 	height:80px;
 	padding: 10px 20px;
-	border-bottom: 1px solid #009688;
+	border-bottom: 1px solid #BBDEFB;
 }
 .item-video:hover
 {
-	background-color: #E0F2F1;
+	background-color: #ECEFF1;
 }
 .item-video .thumb
 {
@@ -96,9 +94,9 @@ body
 }
 .item-video div .len
 {
-	color: #E8AD0C;
+	color: #81C784;
 }
-.item-video .add, .play, .remove
+.item-video .add, .play, .remove, #clear
 {
 	float: right;
 	width: 70px;
@@ -111,11 +109,11 @@ body
 }
 .item-video .add
 {
-	background-color: #004D40;
+	background-color: #2196F3;
 }
 .item-video .play
 {
-	background-color: #00C853;
+	background-color: #00E55F;
 }
 .item-video .remove
 {
@@ -123,7 +121,15 @@ body
 }
 .item-video .add:hover
 {
-	background-color: #00695C;
+	background-color: #1565C0;
+}
+.item-video .play:hover
+{
+	background-color: #00C853;
+}
+.item-video .remove:hover
+{
+	background-color: #FF5722;
 }
 
 #main-right #video

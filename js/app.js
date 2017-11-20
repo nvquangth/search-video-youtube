@@ -19,14 +19,14 @@ $('#keyword').keypress(function(e) {
 });
 
 function search(keyword) {
-    // console.log(keyword);
+    console.log(keyword);
     $( "#frm-search" ).submit(function(event) {
         event.preventDefault();
         $.get(
             "https://www.googleapis.com/youtube/v3/search", {
                 part: 'snippet,id',
                 q: keyword,
-                maxResults: 25,
+                maxResults: 10,
                 type: 'video',
                 order: "viewCount",
                 videoDuration: "medium",
@@ -160,18 +160,34 @@ function play(videoID) {
     // console.log(videoID);
 
     // clear iframe video
-    $('#box-video').html('');
-    $('#box-video').append("<div id='video'></div>");
+    // $('#box-video').html('');
+    // $('#box-video').append("<div id='video'></div>");
 
-    player = new YT.Player('video', {
-        height: '390',
-        width: '640',
-        videoId: videoID,
-        events: {
-        'onReady': onPlayerReady,
-        'onStateChange': onPlayerStateChange
-        }
-    });
+    if(player != null){
+        player.loadVideoById({'videoId': videoID,
+           'startSeconds': 0,
+           'suggestedQuality': 'large'});
+
+    }else{
+        player = new YT.Player('video', {
+          height: '390',
+          width: '640',
+          videoId: videoID,
+          events: {
+            'onReady': onPlayerReady,
+            'onStateChange': onPlayerStateChange
+          }
+        });         
+    }
+    // player = new YT.Player('video', {
+    //     height: '390',
+    //     width: '640',
+    //     videoId: videoID,
+    //     events: {
+    //     'onReady': onPlayerReady,
+    //     'onStateChange': onPlayerStateChange
+    //     }
+    // });
 }
 
 function onPlayerReady(event) {
