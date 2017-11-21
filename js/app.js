@@ -26,33 +26,23 @@ function search(keyword) {
             "https://www.googleapis.com/youtube/v3/search", {
                 part: 'snippet,id',
                 q: keyword,
-                maxResults: 10,
+                maxResults: 50,
                 type: 'video',
-                order: "viewCount",
-                videoDuration: "medium",
                 key: apiKey
             },
             function(data) {
-                // save data converted
-                var data2 = [];
                 // clear list search
                 $('#result-search').html("");
 
+                // console.log("test: " + JSON.stringify(data));
+
                 var content = "";
                 for (var i = 0; i < data.items.length; i++) {
-                    var url1 = "https://www.googleapis.com/youtube/v3/videos?id=" + data.items[i].id.videoId + "&key=" + apiKey + "&part=snippet,contentDetails";
-                    $.ajax({
-                        async: false,
-                        type: 'GET',
-                        url: url1,
-                        success: function(data) {
-                            if (data.items.length > 0) {
-                                data2[i] = data.items[0];
-                                content = content + getResults(data.items[0]);
-                            }
-                        }
-                    });
+                    if (data.items.length > 0) {
+                        content = content + getResults(data.items[i]);
+                    }
                 }
+
                 // show list video search  
                 $('#result-search').append(content);
 
@@ -61,11 +51,11 @@ function search(keyword) {
                     // get index item in list search when click add button
                     var index = $(this).parent().index();
                     // add video clicked above to play
-                    addVideoToPlay(data2[index]);
+                    addVideoToPlay(data.items[index]);
                     // remove item selected in list search
                     $(this).parent().remove();
                     // remove element data2 array
-                    data2.splice(index, 1);
+                    data.items.splice(index, 1);
                 })
 
             });
@@ -75,17 +65,16 @@ function search(keyword) {
 // return item search
 function getResults(item) {
     // get properties of item
-    var videoID = item.id;
+    var videoID = item.id.videoId;
     var title = item.snippet.title;
     var thumb = item.snippet.thumbnails.high.url;
-    var durationR = convert_time(item.contentDetails.duration);
-    var duration = convertT(durationR);
+    var channelTitle = item.snippet.channelTitle;
     var output = 
         "<div class='item-video item-search'>" +
             "<img class='thumb' src='" + thumb + "'>" +
             "<div>" +
                 "<p class='title'>" + title + "</p>" +
-                "<p class='len'>" + duration + "</p>" +
+                "<p class='channelTitle'>" + channelTitle + "</p>" +
             "</div>" +
             "<button class='add' >Add</button>" +
         "</div>";
@@ -93,11 +82,11 @@ function getResults(item) {
 }
 
 function addVideoToPlay(item) {
-    var videoID = item.id;
+
+    var videoID = item.id.videoId;
     var title = item.snippet.title;
     var thumb = item.snippet.thumbnails.high.url;
-    var durationR = convert_time(item.contentDetails.duration);
-    var duration = convertT(durationR);
+    var channelTitle = item.snippet.channelTitle;
 
     if (isPlay == false) {
         isPlay = true;
@@ -108,17 +97,31 @@ function addVideoToPlay(item) {
 
     } else {
         $("#title-queue").text("Play list")
-        addVideoToQueue(videoID, title, thumb, duration);
+
+        // get duration video added to queue
+        var url = "https://www.googleapis.com/youtube/v3/videos?id=" + videoID + "&key=" + apiKey + "&part=snippet,contentDetails";
+        $.ajax({
+            async: false,
+            type: 'GET',
+            url: url,
+            success: function(data) {
+                if (data.items.length > 0) {
+                    var durationR = convert_time(data.items[0].contentDetails.duration);
+                    var duration = convertT(durationR);
+                    addVideoToQueue(videoID, title, thumb, duration, channelTitle);
+                }
+            }
+        });
     }
 }
 
-function addVideoToQueue(videoID, title, thumb, duration) {
-   
+function addVideoToQueue(videoID, title, thumb, duration, channelTitle) {
     var output = 
         "<div class='item-video item-queue'>" +
             "<img class='thumb' src='" + thumb + "'>" +
             "<div>" +
                 "<p class='title'>" + title + "</p>" +
+                "<p class='channelTitle'>" + channelTitle + "</p>" +
                 "<p class='len'>" + duration + "</p>" +
             "</div>" +
             "<button class='play' id= '" + videoID + "'>Play</button>" +
@@ -159,10 +162,6 @@ function addVideoToLocalStorage(videoID) {
 function play(videoID) {
     // console.log(videoID);
 
-    // clear iframe video
-    // $('#box-video').html('');
-    // $('#box-video').append("<div id='video'></div>");
-
     if(player != null){
         player.loadVideoById({'videoId': videoID,
            'startSeconds': 0,
@@ -179,15 +178,6 @@ function play(videoID) {
           }
         });         
     }
-    // player = new YT.Player('video', {
-    //     height: '390',
-    //     width: '640',
-    //     videoId: videoID,
-    //     events: {
-    //     'onReady': onPlayerReady,
-    //     'onStateChange': onPlayerStateChange
-    //     }
-    // });
 }
 
 function onPlayerReady(event) {

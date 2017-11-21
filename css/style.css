@@ -81,12 +81,7 @@ body
 }
 .item-video div .title, .len
 {
-	/*float: left;*/
-	/*line-height: 40px;*/
 	font-size: 16px;
-	/*background-color: yellow;*/
-	/*width: calc(100% - 70px);*/
-	/*width: 200px;*/
 }
 .item-video div .title
 {
@@ -94,7 +89,11 @@ body
 }
 .item-video div .len
 {
-	color: #81C784;
+	color: #FF9800;
+}
+.channelTitle
+{
+	color: #81C784; 
 }
 .item-video .add, .play, .remove, #clear
 {
@@ -132,9 +131,9 @@ body
 	background-color: #FF5722;
 }
 
-#main-right #video
+#video
 {
-	
+	margin-left: 20px;
 }
 
 #main-right #video iframe
