@@ -2,6 +2,8 @@ var apiKey = "AIzaSyDmVBc4vIy8hBBFnv3tB3VvhZwUewNqYjs";
 var arrQueue = [];
 var isPlay = false;
 var player;
+var countStateUnstarted = 0;
+var doubleNext = false;
 
 function init() {
     gapi.client.setApiKey(apiKey);
@@ -14,7 +16,7 @@ function init() {
 $('#keyword').keypress(function(e) {
     if (e.which == 13) {
         search($("#keyword").val());
-        $("#keyword").val("");
+        // $("#keyword").val("");
     }
 });
 
@@ -185,7 +187,8 @@ function onPlayerReady(event) {
 }
 
 function onPlayerStateChange(event) {
-    // when video was ended
+    // console.log(event.data);
+    
     if (event.data == YT.PlayerState.ENDED) {
         nextVideo();
     }
@@ -277,3 +280,7 @@ function convertT(x) {
     var s = x[2];
     return ((h > 0 ? h + ":" + (m < 10 ? "0" : "") : "") + m + ":" + (s < 10 ? "0" : "") + s);
 }
+
+$("#clear").click(function () {
+    $("#keyword").val("");
+})
